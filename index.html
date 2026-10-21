@@ -1,0 +1,117 @@
+<title>Sauterelle Garden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one full-bleed canvas, wordless. Single deliberate look; the ground matches the opening fog. */
+:root{--ground:#e9e6df;color-scheme:light}
+html,body{height:100%;overflow:hidden;background:var(--ground)}
+body{overscroll-behavior:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 1.6s ease}
+canvas.on{opacity:1}
+</style>
+
+<canvas id="c" aria-label="A walk through a garden" role="img"></canvas>
+
+<script>
+// Innermost (the clearing) first. "inner" = where the previous layer sits inside this one, in 1024px units.
+const LAYERS=[{"src":"img/00.webp","inner":null},{"src":"img/01.webp","inner":{"scale":0.68,"x":164,"y":192}},{"src":"img/02.webp","inner":{"scale":0.5,"x":256,"y":256}},{"src":"img/03.webp","inner":{"scale":0.65,"x":180,"y":59}},{"src":"img/04.webp","inner":{"scale":0.542,"x":236,"y":189}},{"src":"img/05.webp","inner":{"scale":0.5,"x":256,"y":255}},{"src":"img/06.webp","inner":{"scale":0.62,"x":204,"y":180}},{"src":"img/07.webp","inner":{"scale":0.618,"x":195,"y":166}},{"src":"img/08.webp","inner":{"scale":0.713,"x":169,"y":83}},{"src":"img/09.webp","inner":{"scale":0.5,"x":255,"y":256}},{"src":"img/10.webp","inner":{"scale":0.676,"x":181,"y":27}},{"src":"img/11.webp","inner":{"scale":0.501,"x":255,"y":255}},{"src":"img/12.webp","inner":{"scale":0.516,"x":247,"y":228}},{"src":"img/13.webp","inner":{"scale":0.501,"x":255,"y":255}},{"src":"img/14.webp","inner":{"scale":0.502,"x":255,"y":255}}];
+const N=LAYERS.length, END=N-1;
+
+// Absolute rect of every layer in the outermost layer's coordinates (outer = 0,0 size 1).
+const A=new Array(N); A[N-1]={x:0,y:0,s:1};
+for(let k=N-1;k>0;k--){const i=LAYERS[k].inner,a=A[k];A[k-1]={x:a.x+a.s*i.x/1024,y:a.y+a.s*i.y/1024,s:a.s*i.scale};}
+
+// Camera at progress p (0 = outermost fog, END = the table): exponential zoom toward each segment's fixed point.
+function view(p){
+  p=Math.max(0,Math.min(END,p));const n=Math.min(Math.floor(p),END-1),u=p-n;
+  const a=A[N-1-n],b=A[N-2-n],r=b.s/a.s,f=Math.pow(r,u);
+  const Fx=(b.x-r*a.x)/(1-r),Fy=(b.y-r*a.y)/(1-r);
+  return{x:Fx+(a.x-Fx)*f,y:Fy+(a.y-Fy)*f,s:a.s*f};
+}
+
+// Move by dz zoom-doublings, so speed feels the same whatever size each scene's jump is.
+function zstep(q,dz){
+  let left=dz;
+  while(Math.abs(left)>1e-6){
+    const n=Math.max(0,Math.min(END-1,dz>0?Math.floor(q+1e-9):Math.ceil(q-1e-9)-1));
+    const r=A[N-2-n].s/A[N-1-n].s,len=Math.log2(1/r);
+    const room=dz>0?(n+1-q)*len:(q-n)*len;
+    if(Math.abs(left)<=room||(dz>0?n+1>=END:n<=0)){q+=left/len;break;}
+    q=dz>0?n+1:n;left-=Math.sign(dz)*room;
+  }
+  return Math.max(0,Math.min(END,q));
+}
+
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W=0,H=0,D=1;
+function size(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;}
+addEventListener('resize',size);size();
+
+const imgs=LAYERS.map(l=>{const im=new Image();im.decoding='async';im.src=l.src;return im;});
+
+function draw(p){
+  const v=view(p),S=Math.max(W,H)*D,ox=(W*D-S)/2,oy=(H*D-S)/2;
+  const R=A.map(a=>({x:ox+(a.x-v.x)/v.s*S,y:oy+(a.y-v.y)/v.s*S,s:a.s/v.s*S}));
+  let start=N-1;
+  for(let j=0;j<N;j++){const r=R[j];if(r.x<=0&&r.y<=0&&r.x+r.s>=W*D&&r.y+r.s>=H*D){start=Math.min(N-1,j+1);break;}}
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  for(let j=start;j>=0;j--){const r=R[j];if(r.s<2)break;ctx.drawImage(imgs[j],r.x,r.y,r.s,r.s);}
+}
+
+// ---- Motion -------------------------------------------------------------
+// Everything is a velocity in zoom-doublings per second. Scrolling adds to it, so
+// a faster scroll moves you faster; it then glides to a stop. Down = deeper, up = back.
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const AUTO=reduce?0:1/3.6;   // gentle drift when nobody is touching it
+const IDLE=3.2;              // seconds of stillness before the drift resumes
+const MAXV=5;                // top speed
+const FRICTION=3.2;          // how quickly a scroll glides to a stop
+const WHEEL=0.0045;          // velocity added per pixel of wheel scroll
+const DRAG=0.0065;           // doublings per pixel of finger drag
+
+let p=0,vel=0,last=0,idle=0,ready=false,dragging=false;
+const clampV=v=>Math.max(-MAXV,Math.min(MAXV,v));
+function touched(){idle=0;}
+
+addEventListener('wheel',e=>{
+  e.preventDefault();
+  const px=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?H:1);
+  // Cancel the forward drift the moment someone scrolls back.
+  if(px<0&&vel>0&&idle>=IDLE)vel=0;
+  vel=clampV(vel+px*WHEEL);touched();
+},{passive:false});
+
+let ty=0,tt=0,tv=0;
+addEventListener('touchstart',e=>{dragging=true;ty=e.touches[0].clientY;tt=performance.now();tv=0;vel=0;touched();},{passive:true});
+addEventListener('touchmove',e=>{
+  const y=e.touches[0].clientY,t=performance.now(),dz=(ty-y)*DRAG,dt=Math.max(1,t-tt)/1000;
+  p=zstep(p,dz);tv=tv*.6+(dz/dt)*.4;ty=y;tt=t;touched();
+},{passive:true});
+addEventListener('touchend',()=>{dragging=false;vel=performance.now()-tt<120?clampV(tv):0;touched();});
+
+addEventListener('keydown',e=>{
+  if(['ArrowDown','PageDown',' '].includes(e.key)){vel=clampV(vel+1.2);touched();e.preventDefault();}
+  if(['ArrowUp','PageUp'].includes(e.key)){vel=clampV(vel-1.2);touched();e.preventDefault();}
+});
+
+function frame(t){
+  const dt=Math.min(.05,(t-(last||t))/1000);last=t;
+  if(ready){
+    idle+=dt;
+    if(!dragging){
+      if(idle>=IDLE&&AUTO&&p<END) vel+=(AUTO-vel)*Math.min(1,dt*1.5);   // ease back into the drift
+      else vel*=Math.exp(-FRICTION*dt);                                  // glide to a stop
+      if(Math.abs(vel)<1e-4)vel=0;
+      const q=zstep(p,vel*dt);
+      if((q<=0&&vel<0)||(q>=END&&vel>0))vel=0;
+      p=q;
+    }
+    draw(p);
+  }
+  requestAnimationFrame(frame);
+}
+Promise.all(imgs.map(im=>im.decode().catch(()=>{}))).then(()=>{
+  ready=true;idle=IDLE-1.5;   // drift begins a moment after the first frame appears
+  draw(p);cv.classList.add('on');
+});
+requestAnimationFrame(frame);
+</script>
