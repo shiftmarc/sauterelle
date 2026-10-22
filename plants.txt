@@ -1,0 +1,83 @@
+# Sauterelle — the plants on the page, top to bottom.
+#
+# To add a plant: put its photo in the "photos" folder, then add a block like the ones below.
+# Leave one empty line between plants. "latin" is optional. Lines starting with # are ignored.
+# The numbers (No. 01, No. 02…) and the layout are worked out automatically.
+#
+# Photos saved as .png or .webp with the background removed float freely on the page; .jpg photos sit in a frame.
+
+photo: sweet-garleek.webp
+name: Sweet Garleek
+note: An organic hybrid of garlic and leek, created by Row 7 Seeds.
+
+photo: c3po-pepper.webp
+name: C3PO Pepper
+note: A hybrid pepper with over 1,000,000 SHU.
+
+photo: okahijiki.webp
+name: Okahijiki
+latin: Salsola komarovii
+note: Land seaweed, one of the oldest vegetables of Japan.
+
+photo: five-spot.webp
+name: Five Spot Flower
+latin: Nemophila maculata
+note: Flavours of basil and watercress.
+
+photo: papalo.webp
+name: Pápalo
+latin: Porophyllum ruderale
+note: A Mexican herb with strong flavours of cilantro and citrus.
+
+photo: spring-blush-pea.webp
+name: Spring Blush Snap Pea
+note: A sweet, crunchy snap pea with bi-coloured pods.
+
+photo: cream-of-saskatchewan.webp
+name: Cream of Saskatchewan Watermelon
+latin: Citrullus lanatus
+note: A white-fleshed watermelon with a sugary sweet flavour.
+
+photo: epazote.webp
+name: Epazote
+latin: Dysphania ambrosioides
+note: A pungent Mexican herb, floral, with notes of mint and basil.
+
+photo: mochi-tomato.webp
+name: Mochi Tomato
+latin: Solanum lycopersicum
+note: A cherry tomato with a soft, chewy, gumdrop-like texture.
+
+photo: nepitella.webp
+name: Nepitella
+latin: Clinopodium nepeta
+note: A Mediterranean herb with flavours of mint, basil, thyme and licorice.
+
+photo: dahlia.webp
+name: Dahlia
+latin: Dahlia pinnata
+note: Sweet and spicy petals with a great crunchy texture.
+
+photo: pumpkin-spice-jalapeno.webp
+name: Pumpkin Spice Jalapeño
+latin: Capsicum annuum
+note: An orange jalapeño with up to 25,000 SHU.
+
+photo: purple-peacock-broccoli.webp
+name: Purple Peacock Broccoli
+note: A hybrid of broccoli and kale.
+
+photo: red-callaloo.webp
+name: Red Callaloo
+latin: Amaranthus tricolor
+note: A Jamaican amaranth with a rich, nutty flavour.
+
+photo: voyage-tomato.webp
+name: Voyage Tomato
+latin: Solanum lycopersicum
+note: A cluster of cherry tomatoes fused together.
+
+photo: claytonia.webp
+name: Claytonia
+latin: Claytonia perfoliata
+note: A mild, sweet flavour with a spinach-like texture.

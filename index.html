@@ -1,117 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sauterelle</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Sauterelle — the plants we grow.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300&display=swap">
 <style>
-/* Layout: one full-bleed canvas, wordless. Single deliberate look; the ground matches the opening fog. */
-:root{--ground:#e9e6df;color-scheme:light}
-html,body{height:100%;overflow:hidden;background:var(--ground)}
-body{overscroll-behavior:none;touch-action:none}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 1.6s ease}
-canvas.on{opacity:1}
-</style>
+/* Layout: plants drift up a single column out of cool shade. Across the middle of the screen falls a band of
+   warm light, as if through glasshouse panes; whatever floats into it comes into colour. The plants hang on a
+   fine vine, and the one in the light has a garden marker pushed in beside it, carrying its number and name.
+   Single deliberate look: shaded greenhouse morning. */
+:root{
+  --shade:#d9dbd4;       /* cool shade at the top and bottom */
+  --sun:#f7efdd;         /* warm light in the middle */
+  --ink:#1d211b;
+  --leaf:#26301f;      /* vine */
+  --stake:#efe6d1;     /* the marker */
+  --pencil:#3a3a32;
+  --soft:#6f746a;
+  --serif:"Instrument Serif","Cormorant Garamond",Georgia,serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--shade);color:var(--ink)}
+body{
+  font-family:var(--serif);-webkit-font-smoothing:antialiased;overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(180deg,var(--shade) 0%,#e6e5dd 30%,var(--sun) 50%,#e6e5dd 70%,var(--shade) 100%);
+}
 
-<canvas id="c" aria-label="A walk through a garden" role="img"></canvas>
+/* The light: a soft warm glow across the middle, with the faint shadows of glazing bars slanting through it. */
+.light{position:fixed;left:-20%;right:-20%;top:50%;height:min(64vh,620px);transform:translateY(-50%);pointer-events:none}
+#glow{z-index:0;background:radial-gradient(ellipse 52% 50% at 50% 50%,rgba(255,231,182,.85),rgba(255,231,182,.25) 55%,rgba(255,231,182,0) 75%)}
+#panes{z-index:0;opacity:.55;
+  background:repeating-linear-gradient(90deg,rgba(60,62,50,0) 0 calc(14vw - 2px),rgba(60,62,50,.09) calc(14vw - 2px) 14vw);
+  -webkit-mask-image:radial-gradient(ellipse 50% 46% at 50% 50%,#000 30%,transparent 72%);
+          mask-image:radial-gradient(ellipse 50% 46% at 50% 50%,#000 30%,transparent 72%);
+  transform:translateY(-50%) skewX(-16deg);animation:drift 60s linear infinite}
+/* the same light laid over the photos, so the one passing through actually looks lit */
+#wash{z-index:5;mix-blend-mode:soft-light;background:radial-gradient(ellipse 46% 44% at 50% 50%,rgba(255,226,170,.9),rgba(255,226,170,0) 70%)}
+@keyframes drift{to{background-position:28vw 0}}
+
+#vine{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+#strip{position:fixed;inset:0;overflow:hidden;z-index:2}
+.item{position:absolute;left:50%;top:0;will-change:transform,filter;cursor:pointer;overflow:hidden;background:#cfd0c8}
+.item img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
+/* Cut-out plants (PNG photos with the background removed) float freely: no frame, just a soft shadow beneath. */
+.item.cut{overflow:visible;background:none}
+.item.cut img{object-fit:contain}
+
+/* Words: the name at the top, and the plant in the light named beside it. */
+#fade{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 96px);z-index:8;pointer-events:none;background:linear-gradient(var(--shade) 35%,rgba(217,219,212,0))}
+#mark{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 20px);text-align:center;z-index:10;pointer-events:none;
+  font-size:1.35rem;letter-spacing:.01em}
+/* The marker: a slim garden stake pushed in at the photo's lower corner. Number at the top, name pencilled up its length. */
+#marker{position:fixed;left:0;top:0;z-index:9;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 6px 8px rgba(30,32,24,.22))}
+.stake{
+  width:44px;height:var(--mh,180px);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:11px;box-sizing:border-box;
+  background:linear-gradient(90deg,#e6dcc4,var(--stake) 35%,#f6efde 60%,#e2d7bd);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 24px),50% 100%,0 calc(100% - 24px));
+}
+.stake .no{font-family:var(--mono);font-weight:300;font-size:.6rem;letter-spacing:.1em;color:var(--pencil);font-variant-numeric:tabular-nums}
+.stake .nm{writing-mode:vertical-rl;transform:rotate(180deg);font-style:italic;font-size:1.32rem;line-height:1;color:var(--pencil);white-space:nowrap;
+  max-height:calc(var(--mh,180px) - 64px);overflow:hidden;text-overflow:ellipsis}
+#note{position:fixed;top:50%;z-index:10;pointer-events:none;right:calc(50% + var(--cw) / 2 + 36px);width:min(300px,calc(50vw - var(--cw) / 2 - 56px));text-align:right;transform:translateY(-50%)}
+#note p{margin-left:auto}
+#note{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s cubic-bezier(.2,.7,.2,1)}
+#note>div{overflow:hidden}
+#note .nm{display:block;margin-top:.9rem;font-size:1.75rem;line-height:1.1}
+#note .lt{display:block;margin-top:.15rem;font-style:italic;color:var(--soft);font-size:1rem}
+#note p{margin:.35rem 0 0 auto;font-size:1.12rem;line-height:1.42;max-width:26ch}
+#note .nm,#note .lt,#note p{opacity:0;transition:opacity .5s ease .15s}
+body.reading #note{grid-template-rows:1fr}
+body.reading #note .nm,body.reading #note .lt,body.reading #note p{opacity:1}
+
+/* Phones: the note rises from the bottom instead of sitting beside the photo. */
+@media (max-width:700px){
+  #mark{text-align:left;padding-left:max(20px,env(safe-area-inset-left,0px))}
+  #note{top:auto;left:0;right:0;bottom:0;width:auto;transform:none;padding:24px max(20px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 30px);
+    background:linear-gradient(to top,var(--shade) 70%,rgba(217,219,212,0));text-align:center}
+  #note p{margin-left:auto;margin-right:auto}
+  .stake{width:36px}
+  .stake .nm{font-size:1.12rem}
+}
+@media (prefers-reduced-motion:reduce){#panes{animation:none}}
+.empty{position:fixed;inset:0;display:grid;place-items:center;color:var(--soft);font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="light" id="glow"></div>
+<div class="light" id="panes"></div>
+<canvas id="vine"></canvas>
+<div id="strip"></div>
+<div class="light" id="wash"></div>
+<div id="fade"></div>
+<div id="mark">Sauterelle</div>
+<div id="marker" aria-live="polite"><div class="stake"><span class="no"></span><span class="nm"></span></div></div>
+<div id="note"><div><span class="nm"></span><span class="lt"></span><p></p></div></div>
 
 <script>
-// Innermost (the clearing) first. "inner" = where the previous layer sits inside this one, in 1024px units.
-const LAYERS=[{"src":"img/00.webp","inner":null},{"src":"img/01.webp","inner":{"scale":0.68,"x":164,"y":192}},{"src":"img/02.webp","inner":{"scale":0.5,"x":256,"y":256}},{"src":"img/03.webp","inner":{"scale":0.65,"x":180,"y":59}},{"src":"img/04.webp","inner":{"scale":0.542,"x":236,"y":189}},{"src":"img/05.webp","inner":{"scale":0.5,"x":256,"y":255}},{"src":"img/06.webp","inner":{"scale":0.62,"x":204,"y":180}},{"src":"img/07.webp","inner":{"scale":0.618,"x":195,"y":166}},{"src":"img/08.webp","inner":{"scale":0.713,"x":169,"y":83}},{"src":"img/09.webp","inner":{"scale":0.5,"x":255,"y":256}},{"src":"img/10.webp","inner":{"scale":0.676,"x":181,"y":27}},{"src":"img/11.webp","inner":{"scale":0.501,"x":255,"y":255}},{"src":"img/12.webp","inner":{"scale":0.516,"x":247,"y":228}},{"src":"img/13.webp","inner":{"scale":0.501,"x":255,"y":255}},{"src":"img/14.webp","inner":{"scale":0.502,"x":255,"y":255}}];
-const N=LAYERS.length, END=N-1;
-
-// Absolute rect of every layer in the outermost layer's coordinates (outer = 0,0 size 1).
-const A=new Array(N); A[N-1]={x:0,y:0,s:1};
-for(let k=N-1;k>0;k--){const i=LAYERS[k].inner,a=A[k];A[k-1]={x:a.x+a.s*i.x/1024,y:a.y+a.s*i.y/1024,s:a.s*i.scale};}
-
-// Camera at progress p (0 = outermost fog, END = the table): exponential zoom toward each segment's fixed point.
-function view(p){
-  p=Math.max(0,Math.min(END,p));const n=Math.min(Math.floor(p),END-1),u=p-n;
-  const a=A[N-1-n],b=A[N-2-n],r=b.s/a.s,f=Math.pow(r,u);
-  const Fx=(b.x-r*a.x)/(1-r),Fy=(b.y-r*a.y)/(1-r);
-  return{x:Fx+(a.x-Fx)*f,y:Fy+(a.y-Fy)*f,s:a.s*f};
-}
-
-// Move by dz zoom-doublings, so speed feels the same whatever size each scene's jump is.
-function zstep(q,dz){
-  let left=dz;
-  while(Math.abs(left)>1e-6){
-    const n=Math.max(0,Math.min(END-1,dz>0?Math.floor(q+1e-9):Math.ceil(q-1e-9)-1));
-    const r=A[N-2-n].s/A[N-1-n].s,len=Math.log2(1/r);
-    const room=dz>0?(n+1-q)*len:(q-n)*len;
-    if(Math.abs(left)<=room||(dz>0?n+1>=END:n<=0)){q+=left/len;break;}
-    q=dz>0?n+1:n;left-=Math.sign(dz)*room;
-  }
-  return Math.max(0,Math.min(END,q));
-}
-
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-let W=0,H=0,D=1;
-function size(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;}
-addEventListener('resize',size);size();
-
-const imgs=LAYERS.map(l=>{const im=new Image();im.decoding='async';im.src=l.src;return im;});
-
-function draw(p){
-  const v=view(p),S=Math.max(W,H)*D,ox=(W*D-S)/2,oy=(H*D-S)/2;
-  const R=A.map(a=>({x:ox+(a.x-v.x)/v.s*S,y:oy+(a.y-v.y)/v.s*S,s:a.s/v.s*S}));
-  let start=N-1;
-  for(let j=0;j<N;j++){const r=R[j];if(r.x<=0&&r.y<=0&&r.x+r.s>=W*D&&r.y+r.s>=H*D){start=Math.min(N-1,j+1);break;}}
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  for(let j=start;j>=0;j--){const r=R[j];if(r.s<2)break;ctx.drawImage(imgs[j],r.x,r.y,r.s,r.s);}
-}
-
-// ---- Motion -------------------------------------------------------------
-// Everything is a velocity in zoom-doublings per second. Scrolling adds to it, so
-// a faster scroll moves you faster; it then glides to a stop. Down = deeper, up = back.
+(function(){
+const strip=document.getElementById('strip'),marker=document.getElementById('marker'),mNo=marker.querySelector('.no'),mNm=marker.querySelector('.nm');
+const note=document.getElementById('note');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const AUTO=reduce?0:1/3.6;   // gentle drift when nobody is touching it
-const IDLE=3.2;              // seconds of stillness before the drift resumes
-const MAXV=5;                // top speed
-const FRICTION=3.2;          // how quickly a scroll glides to a stop
-const WHEEL=0.0045;          // velocity added per pixel of wheel scroll
-const DRAG=0.0065;           // doublings per pixel of finger drag
 
-let p=0,vel=0,last=0,idle=0,ready=false,dragging=false;
-const clampV=v=>Math.max(-MAXV,Math.min(MAXV,v));
-function touched(){idle=0;}
+// ---- plants.txt --------------------------------------------------------------
+function parse(txt){
+  const out=[];let cur=null;
+  for(const raw of txt.split(/\r?\n/)){
+    const line=raw.trim();
+    if(line.startsWith('#'))continue;
+    if(!line){if(cur&&cur.photo)out.push(cur);cur=null;continue;}
+    const m=line.match(/^(\w+)\s*:\s*(.*)$/);
+    if(!m){if(cur&&cur.note)cur.note+=' '+line;continue;}
+    cur=cur||{};cur[m[1].toLowerCase()]=m[2];
+  }
+  if(cur&&cur.photo)out.push(cur);
+  return out;
+}
 
-addEventListener('wheel',e=>{
-  e.preventDefault();
-  const px=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?H:1);
-  // Cancel the forward drift the moment someone scrolls back.
-  if(px<0&&vel>0&&idle>=IDLE)vel=0;
-  vel=clampV(vel+px*WHEEL);touched();
-},{passive:false});
+// ---- Geometry ---------------------------------------------------------------------
+// Each photo keeps its own shape; widths follow a loose rhythm so the column never looks like a template.
+const GAP=34;
+let P=[],N=0,W=0,H=0,base=0,w=[],h=[],off=[],L=0;
+function measure(){
+  W=innerWidth;H=innerHeight;
+  base=Math.min(W*.6,H*.42,400);
+  off=[];w=[];h=[];let y=0;
+  P.forEach((p,i)=>{
+    // framed photos are all one size and shape; cut-outs keep their own outline at a matching height
+    const cut=/\.(png|webp)$/i.test(p.photo);
+    let hh=base/.8,ww=base;
+    if(cut){hh=base/.8*1.12;ww=Math.min(hh*(p.ar||.5),base*1.05,W*.8);hh=ww/(p.ar||.5);}
+    w.push(ww);h.push(hh);off.push(y);y+=hh+GAP;
+  });
+  L=y;
+}
+const mod=(a,n)=>((a%n)+n)%n;
+// item k (any integer) lives at lap floor(k/N); its centre on the strip:
+const centreOf=k=>Math.floor(k/N)*L+off[mod(k,N)]+h[mod(k,N)]/2;
+function nearest(s){
+  // which item's centre is closest to strip position s
+  const lap=Math.floor(s/L),r=s-lap*L;let best=0,bd=1e9;
+  for(let i=0;i<N;i++){const c=off[i]+h[i]/2;for(const dl of [-1,0,1]){const d=Math.abs(c+dl*L-r);if(d<bd){bd=d;best=i+(lap+dl)*N;}}}
+  return best;
+}
 
-let ty=0,tt=0,tv=0;
-addEventListener('touchstart',e=>{dragging=true;ty=e.touches[0].clientY;tt=performance.now();tv=0;vel=0;touched();},{passive:true});
-addEventListener('touchmove',e=>{
-  const y=e.touches[0].clientY,t=performance.now(),dz=(ty-y)*DRAG,dt=Math.max(1,t-tt)/1000;
-  p=zstep(p,dz);tv=tv*.6+(dz/dt)*.4;ty=y;tt=t;touched();
-},{passive:true});
-addEventListener('touchend',()=>{dragging=false;vel=performance.now()-tt<120?clampV(tv):0;touched();});
+// ---- Pool of photo elements --------------------------------------------------------
+const pool=new Map();
+function el(k){
+  let e=pool.get(k);if(e)return e;
+  const i=mod(k,N);e=document.createElement('div');e.className='item'+(/\.(png|webp)$/i.test(P[i].photo)?' cut':'');
+  e.innerHTML='<img alt="'+esc(P[i].name||'')+'" src="photos/'+encodeURI(P[i].photo)+'" decoding="async">';
+  e.addEventListener('click',()=>onTap(k));
+  strip.appendChild(e);pool.set(k,e);return e;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
+// ---- Motion state ----------------------------------------------------------------
+let s=0,vel=0,target=null,dragging=false,lastInput=-1e9,reading=false;
+function setReading(v){
+  reading=v;document.body.classList.toggle('reading',v);
+  if(v){const p=P[mod(cur,N)];note.querySelector('.nm').textContent=p.name||'';note.querySelector('.lt').textContent=p.latin||'';note.querySelector('p').textContent=p.note||'';}
+}
+function goTo(k){target=centreOf(k);vel=0;lastInput=performance.now();}
+function onTap(k){
+  if(moved)return;
+  if(k===cur){setReading(!reading);return;}
+  setReading(false);goTo(k);
+}
+document.addEventListener('click',e=>{if(reading&&!e.target.closest('.item'))setReading(false);});
+
+function nudge(px){target=null;vel=Math.max(-90,Math.min(90,vel+px));lastInput=performance.now();if(reading)setReading(false);}
+addEventListener('wheel',e=>{e.preventDefault();const px=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?H:1);nudge(px*.11);},{passive:false});
+let ty=0,tt=0,tv=0,sy=0,moved=false;
+addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;dragging=true;moved=false;ty=sy=e.clientY;tt=performance.now();tv=0;vel=0;target=null;});
+addEventListener('pointermove',e=>{
+  if(!dragging)return;const t=performance.now(),dy=ty-e.clientY,dt=Math.max(8,t-tt);
+  if(Math.abs(e.clientY-sy)>6){moved=true;if(reading)setReading(false);}
+  s+=dy;tv=tv*.4+(dy/dt*16.7)*.6;ty=e.clientY;tt=t;lastInput=t;
+});
+const end=()=>{if(!dragging)return;dragging=false;vel=Math.max(-120,Math.min(120,tv));lastInput=performance.now();setTimeout(()=>moved=false,0);};
+addEventListener('pointerup',end);addEventListener('pointercancel',end);
 addEventListener('keydown',e=>{
-  if(['ArrowDown','PageDown',' '].includes(e.key)){vel=clampV(vel+1.2);touched();e.preventDefault();}
-  if(['ArrowUp','PageUp'].includes(e.key)){vel=clampV(vel-1.2);touched();e.preventDefault();}
+  if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();setReading(false);goTo(cur+1);}
+  if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();setReading(false);goTo(cur-1);}
+  if(e.key==='Enter')setReading(!reading);
+  if(e.key==='Escape')setReading(false);
 });
 
+let cur=0,shown=-1;
+
+// ---- Render ------------------------------------------------------------------------
+let lastT=0,cw=0,gw=0,gh=0,sink=0,needH=0;
+// length of the pencilled name, so the marker can grow to fit it
+const tctx=document.createElement('canvas').getContext('2d');
+function textLen(el){const cs=getComputedStyle(el);tctx.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return Math.ceil(tctx.measureText(el.textContent).width);}
+const vine=document.getElementById('vine'),vx=vine.getContext('2d');let VD=1;
+function sizeVine(){VD=Math.min(devicePixelRatio||1,2);vine.width=innerWidth*VD;vine.height=innerHeight*VD;}
+sizeVine();addEventListener('resize',sizeVine);
+
+// A fine vine runs down behind the plants, swaying gently, with small leaves along it.
+function drawVine(top){
+  const W=innerWidth,H=innerHeight,A=Math.min(W*.05,34),lam=300;
+  vx.setTransform(VD,0,0,VD,0,0);vx.clearRect(0,0,W,H);
+  vx.strokeStyle='rgba(38,48,31,.32)';vx.lineWidth=1.1;vx.beginPath();
+  const xAt=y=>W/2+A*Math.sin((y+top)/lam)+A*.4*Math.sin((y+top)/(lam*.41)+1.3);
+  for(let y=-20;y<=H+20;y+=6){const x=xAt(y);y===-20?vx.moveTo(x,y):vx.lineTo(x,y);}
+  vx.stroke();
+  vx.fillStyle='rgba(38,48,31,.30)';
+  const step=118,first=Math.ceil((top-20)/step);
+  for(let n=first;n*step-top<H+20;n++){
+    const y=n*step-top,x=xAt(y),side=n%2?1:-1;
+    vx.save();vx.translate(x,y);vx.rotate(side*.75-.3);vx.beginPath();
+    vx.ellipse(side*9,0,10,3.6,0,0,Math.PI*2);vx.fill();vx.restore();
+  }
+}
 function frame(t){
-  const dt=Math.min(.05,(t-(last||t))/1000);last=t;
-  if(ready){
-    idle+=dt;
+  const dt=Math.min(3,(t-(lastT||t))/16.7);lastT=t;
+  if(N){
     if(!dragging){
-      if(idle>=IDLE&&AUTO&&p<END) vel+=(AUTO-vel)*Math.min(1,dt*1.5);   // ease back into the drift
-      else vel*=Math.exp(-FRICTION*dt);                                  // glide to a stop
-      if(Math.abs(vel)<1e-4)vel=0;
-      const q=zstep(p,vel*dt);
-      if((q<=0&&vel<0)||(q>=END&&vel>0))vel=0;
-      p=q;
+      if(target!==null){s+=(target-s)*(1-Math.pow(1-.075,dt));if(Math.abs(target-s)<.3){s=target;target=null;}}
+      else{
+        s+=vel*dt;vel*=Math.pow(.93,dt);
+        if(Math.abs(vel)<2.5&&t-lastInput>90){const c=centreOf(nearest(s));s+=(c-s)*(1-Math.pow(1-.1,dt));vel*=.6;if(Math.abs(c-s)<.25)s=c;}
+      }
     }
-    draw(p);
+    cur=nearest(s);
+    const top=s-H/2,band=Math.min(H*.32,310);   // half-height of the lit band
+    const seen=new Set();
+    const draw=k=>{
+      const i=mod(k,N),y=centreOf(k)-h[i]/2-top;
+      if(y>H+60||y+h[i]<-60)return false;
+      seen.add(k);const e=el(k);
+      // how far this photo sits from the light: 0 fully lit, 1 in shade
+      const g=Math.min(1,Math.max(0,(Math.abs(centreOf(k)-s)-h[i]*.18)/band));
+      const g2=g*g*(3-2*g);
+      e.style.width=w[i]+'px';e.style.height=h[i]+'px';
+      e.style.transform='translate3d('+(-w[i]/2)+'px,'+y.toFixed(1)+'px,0)';
+      e.style.filter=(e.classList.contains('cut')?'drop-shadow(0 22px 18px rgba(30,32,24,'+(.22-.1*g2).toFixed(3)+')) ':'')+'saturate('+(1.06-.96*g2).toFixed(3)+') brightness('+(1.03-.2*g2).toFixed(3)+') contrast('+(1-.1*g2).toFixed(3)+') sepia('+(.06*(1-g2)).toFixed(3)+')';
+      e.style.opacity=reading&&k!==cur?'.25':'1';
+      return true;
+    };
+    for(let k=cur,n=0;n<30&&draw(k);k--,n++);
+    for(let k=cur+1,n=0;n<30&&draw(k);k++,n++);
+    for(const [k,e] of pool){if(!seen.has(k)){e.remove();pool.delete(k);}}
+
+    // the marker follows the size of the photo in the light, blending between neighbours while moving
+    const i=mod(cur,N);
+    const c=centreOf(cur),dk=s-c,nk=dk>0?cur+1:cur-1,ni=mod(nk,N),span=Math.abs(centreOf(nk)-c)||1,f=Math.min(1,Math.abs(dk)/span);
+    gw+=((w[i]+(w[ni]-w[i])*f)-gw)*.22;gh+=((h[i]+(h[ni]-h[i])*f)-gh)*.22;
+    // while plants are moving the marker is pulled down out of the light; once one settles it is pushed back in with the new name
+    // it starts rising as soon as a plant is nearly in place, rather than waiting for it to fully settle
+    // Look ahead: where will this glide come to rest? The marker heads for that plant while it is still arriving.
+    const rest=target!==null?target:s+vel*13,land=nearest(rest),li=mod(land,N);
+    const arriving=Math.abs(centreOf(land)-s)<gh*.55;
+    const moving=dragging&&Math.abs(tv)>2||Math.abs(vel)>14||!arriving;
+    const want=moving||li!==shown?1:0;
+    sink+=(want-sink)*Math.min(1,(want?.35:.24)*dt);
+    if(li!==shown&&sink>.8){shown=li;mNo.textContent=String(li+1).padStart(2,'0')+'/'+String(N).padStart(2,'0');mNm.textContent=P[li].name||'';needH=textLen(mNm)+72;if(reading)setReading(false);}
+    const narrow=W<=700,mw=narrow?36:44,mh=Math.max(120,needH,Math.min(gh*.62,230));
+    marker.style.setProperty('--mh',mh.toFixed(0)+'px');
+    const mx=Math.min(W/2+gw/2-mw*.55,W-mw-10),my=H/2+gh/2+30-mh+sink*mh*.75;
+    marker.style.transform='translate3d('+mx.toFixed(1)+'px,'+my.toFixed(1)+'px,0) rotate('+(3+sink*4).toFixed(2)+'deg)';
+    marker.style.opacity=(1-sink*.95).toFixed(3);
+    drawVine(top);
+    cw=gw;document.documentElement.style.setProperty('--cw',cw.toFixed(1)+'px');
   }
   requestAnimationFrame(frame);
 }
-Promise.all(imgs.map(im=>im.decode().catch(()=>{}))).then(()=>{
-  ready=true;idle=IDLE-1.5;   // drift begins a moment after the first frame appears
-  draw(p);cv.classList.add('on');
-});
+
+addEventListener('resize',()=>{if(N){const k=cur;measure();s=centreOf(k);}});
+fetch('plants.txt',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.text();})
+  .then(txt=>{P=parse(txt);N=P.length;if(!N)throw 0;
+    return Promise.all(P.map(p=>new Promise(res=>{const im=new Image();im.onload=()=>{p.ar=im.naturalWidth/im.naturalHeight;res();};im.onerror=()=>res();im.src='photos/'+encodeURI(p.photo);})));})
+  .then(()=>{measure();s=centreOf(0);gw=w[0];gh=h[0];cw=gw;sink=1;})
+  .catch(()=>{document.body.insertAdjacentHTML('beforeend','<p class="empty">No plants listed yet. Add them to plants.txt.</p>');});
 requestAnimationFrame(frame);
+})();
 </script>
+</body>
+</html>
