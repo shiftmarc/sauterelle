@@ -5,106 +5,122 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sauterelle</title>
 <meta name="description" content="Sauterelle — the plants we grow.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e9e7df'/%3E%3Cpath d='M18 46C18 28 30 16 48 16c0 18-12 30-30 30z' fill='%23334029'/%3E%3Cpath d='M18 46L40 24' stroke='%23e9e7df' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300&display=swap">
 <style>
-/* Layout: plants drift up a single column out of cool shade. Across the middle of the screen falls a band of
-   warm light, as if through glasshouse panes; whatever floats into it comes into colour. The plants hang on a
-   fine vine, and the one in the light has a garden marker pushed in beside it, carrying its number and name.
+/* Layout: plants drift up a single column out of cool shade into one band of warm light across the middle.
+   The plant in the light is in colour and in focus, hovering just above its own soft shadow; the others sit back,
+   grey and slightly out of focus. A garden marker carries its number and name. Nothing else on the page.
    Single deliberate look: shaded greenhouse morning. */
 :root{
-  --shade:#d9dbd4;       /* cool shade at the top and bottom */
-  --sun:#f7efdd;         /* warm light in the middle */
-  --ink:#1d211b;
-  --leaf:#26301f;      /* vine */
-  --stake:#efe6d1;     /* the marker */
-  --pencil:#3a3a32;
-  --soft:#6f746a;
+  --shade:#d8dad2;       /* cool shade at the top and bottom */
+  --mid:#e7e5dc;
+  --sun:#f6eedd;         /* warm light in the middle */
+  --ink:#1c201a;
+  --stake:#efe7d4;       /* the marker */
+  --pencil:#34352d;
+  --soft:#71766b;
   --serif:"Instrument Serif","Cormorant Garamond",Georgia,serif;
   --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.22,.7,.18,1);
   color-scheme:light;
 }
 html,body{height:100%;margin:0;overflow:hidden;background:var(--shade);color:var(--ink)}
 body{
   font-family:var(--serif);-webkit-font-smoothing:antialiased;overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none;
-  background:linear-gradient(180deg,var(--shade) 0%,#e6e5dd 30%,var(--sun) 50%,#e6e5dd 70%,var(--shade) 100%);
+  background:linear-gradient(180deg,var(--shade) 0%,var(--mid) 28%,var(--sun) 50%,var(--mid) 72%,var(--shade) 100%);
 }
 
-/* The light: a soft warm glow across the middle, with the faint shadows of glazing bars slanting through it. */
-.light{position:fixed;left:-20%;right:-20%;top:50%;height:min(64vh,620px);transform:translateY(-50%);pointer-events:none}
-#glow{z-index:0;background:radial-gradient(ellipse 52% 50% at 50% 50%,rgba(255,231,182,.85),rgba(255,231,182,.25) 55%,rgba(255,231,182,0) 75%)}
-#panes{z-index:0;opacity:.55;
-  background:repeating-linear-gradient(90deg,rgba(60,62,50,0) 0 calc(14vw - 2px),rgba(60,62,50,.09) calc(14vw - 2px) 14vw);
-  -webkit-mask-image:radial-gradient(ellipse 50% 46% at 50% 50%,#000 30%,transparent 72%);
-          mask-image:radial-gradient(ellipse 50% 46% at 50% 50%,#000 30%,transparent 72%);
-  transform:translateY(-50%) skewX(-16deg);animation:drift 60s linear infinite}
-/* the same light laid over the photos, so the one passing through actually looks lit */
-#wash{z-index:5;mix-blend-mode:soft-light;background:radial-gradient(ellipse 46% 44% at 50% 50%,rgba(255,226,170,.9),rgba(255,226,170,0) 70%)}
-@keyframes drift{to{background-position:28vw 0}}
+/* The light: one soft, wide pool of warmth, and the same light laid over the plants so the one in it looks lit. */
+.light{position:fixed;left:-25%;right:-25%;top:50%;height:min(70vh,680px);transform:translateY(-50%);pointer-events:none}
+#glow{z-index:0;background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(255,232,186,.8),rgba(255,232,186,.22) 55%,rgba(255,232,186,0) 78%)}
+#wash{z-index:5;mix-blend-mode:soft-light;background:radial-gradient(ellipse 42% 42% at 50% 50%,rgba(255,226,172,.85),rgba(255,226,172,0) 72%)}
+/* Fine paper grain so the background never reads as a flat screen colour. */
+#grain{position:fixed;inset:0;z-index:6;pointer-events:none;opacity:.06;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
 
-#vine{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-#strip{position:fixed;inset:0;overflow:hidden;z-index:2}
-.item{position:absolute;left:50%;top:0;will-change:transform,filter;cursor:pointer;overflow:hidden;background:#cfd0c8}
-.item img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}
-/* Cut-out plants (PNG photos with the background removed) float freely: no frame, just a soft shadow beneath. */
-.item.cut{overflow:visible;background:none}
+#strip{position:fixed;inset:0;overflow:hidden;z-index:2;transition:opacity 1.4s ease}
+.item{position:absolute;left:50%;top:0;will-change:transform,filter,opacity;cursor:pointer}
+.item img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;will-change:transform}
+.item.framed{overflow:hidden;background:#cfd0c8}
 .item.cut img{object-fit:contain}
+/* The ground shadow: stays put while the plant hovers above it. */
+.item .sh{position:absolute;left:12%;right:12%;bottom:-5%;height:12%;z-index:0;border-radius:50%;pointer-events:none;will-change:transform,opacity;
+  background:radial-gradient(closest-side,rgba(32,34,26,.34),rgba(32,34,26,.12) 55%,rgba(32,34,26,0))}
+.item.framed .sh{display:none}
 
-/* Words: the name at the top, and the plant in the light named beside it. */
-#fade{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 96px);z-index:8;pointer-events:none;background:linear-gradient(var(--shade) 35%,rgba(217,219,212,0))}
-#mark{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 20px);text-align:center;z-index:10;pointer-events:none;
-  font-size:1.35rem;letter-spacing:.01em}
-/* The marker: a slim garden stake pushed in at the photo's lower corner. Number at the top, name pencilled up its length. */
-#marker{position:fixed;left:0;top:0;z-index:9;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 6px 8px rgba(30,32,24,.22))}
+/* Wordmark: quiet, wide-spaced capitals. */
+#fade{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 92px);z-index:8;pointer-events:none;background:linear-gradient(var(--shade) 30%,rgba(216,218,210,0))}
+#mark{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 24px);text-align:center;z-index:10;pointer-events:none;
+  font-size:.92rem;letter-spacing:.42em;text-indent:.42em;text-transform:uppercase;color:var(--ink);
+  opacity:0;transform:translateY(6px);transition:opacity 1.2s ease .2s,transform 1.4s var(--ease) .2s}
+body.ready #mark{opacity:1;transform:none}
+
+/* The marker: a slim garden stake at the plant's lower corner. Number at the top, name pencilled up its length. */
+#marker{position:fixed;left:0;top:0;z-index:9;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 5px 7px rgba(30,32,24,.18));transform-origin:50% 100%}
 .stake{
-  width:44px;height:var(--mh,180px);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:11px;box-sizing:border-box;
-  background:linear-gradient(90deg,#e6dcc4,var(--stake) 35%,#f6efde 60%,#e2d7bd);
-  clip-path:polygon(0 0,100% 0,100% calc(100% - 24px),50% 100%,0 calc(100% - 24px));
+  width:38px;height:var(--mh,180px);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:12px;box-sizing:border-box;
+  background:linear-gradient(90deg,#e4dbc6,var(--stake) 32%,#f7f1e3 58%,#e1d7c0);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 20px),50% 100%,0 calc(100% - 20px));
 }
-.stake .no{font-family:var(--mono);font-weight:300;font-size:.6rem;letter-spacing:.1em;color:var(--pencil);font-variant-numeric:tabular-nums}
-.stake .nm{writing-mode:vertical-rl;transform:rotate(180deg);font-style:italic;font-size:1.32rem;line-height:1;color:var(--pencil);white-space:nowrap;
-  max-height:calc(var(--mh,180px) - 64px);overflow:hidden;text-overflow:ellipsis}
-#note{position:fixed;top:50%;z-index:10;pointer-events:none;right:calc(50% + var(--cw) / 2 + 36px);width:min(300px,calc(50vw - var(--cw) / 2 - 56px));text-align:right;transform:translateY(-50%)}
-#note p{margin-left:auto}
-#note{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s cubic-bezier(.2,.7,.2,1)}
-#note>div{overflow:hidden}
-#note .nm{display:block;margin-top:.9rem;font-size:1.75rem;line-height:1.1}
-#note .lt{display:block;margin-top:.15rem;font-style:italic;color:var(--soft);font-size:1rem}
-#note p{margin:.35rem 0 0 auto;font-size:1.12rem;line-height:1.42;max-width:26ch}
-#note .nm,#note .lt,#note p{opacity:0;transition:opacity .5s ease .15s}
-body.reading #note{grid-template-rows:1fr}
-body.reading #note .nm,body.reading #note .lt,body.reading #note p{opacity:1}
+.stake .no{font-family:var(--mono);font-weight:300;font-size:.56rem;letter-spacing:.12em;color:var(--pencil);font-variant-numeric:tabular-nums}
+.stake .nm{writing-mode:vertical-rl;transform:rotate(180deg);font-style:italic;font-size:1.22rem;line-height:1;color:var(--pencil);white-space:nowrap}
 
-/* Phones: the note rises from the bottom instead of sitting beside the photo. */
+/* The note: name, latin, description, each line rising out of a soft blur, one after another. */
+#note{position:fixed;top:50%;z-index:10;pointer-events:none;right:calc(50% + var(--cw) / 2 + 40px);width:min(300px,calc(50vw - var(--cw) / 2 - 60px));text-align:right;transform:translateY(-50%)}
+#note .nm{display:block;font-size:1.9rem;line-height:1.05}
+#note .lt{display:block;margin-top:.3rem;font-family:var(--mono);font-weight:300;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--soft)}
+#note .rule{display:block;height:1px;width:28px;margin:.9rem 0 .8rem auto;background:var(--ink);opacity:.35;transform-origin:right;transform:scaleX(0);transition:transform .6s var(--ease)}
+#note p{margin:0 0 0 auto;font-size:1.12rem;line-height:1.45;max-width:26ch}
+#note .nm,#note .lt,#note p{opacity:0;transform:translateY(10px);filter:blur(5px);transition:opacity .5s ease,transform .7s var(--ease),filter .6s ease}
+body.reading #note .nm,body.reading #note .lt,body.reading #note p{opacity:1;transform:none;filter:none}
+body.reading #note .lt{transition-delay:.08s}
+body.reading #note .rule{transform:scaleX(1);transition-delay:.14s}
+body.reading #note p{transition-delay:.2s}
+
+/* A small cursor on computers: a dot that opens into a ring over a plant. */
+#cursor{position:fixed;left:0;top:0;z-index:20;pointer-events:none;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;
+  background:var(--ink);opacity:0;transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),background .3s,border-color .3s,opacity .3s;
+  border:1px solid transparent;box-sizing:border-box}
+#cursor.on{opacity:.85}
+#cursor.over{width:46px;height:46px;margin:-23px 0 0 -23px;background:transparent;border-color:var(--ink)}
+@media (hover:hover) and (pointer:fine){html,body,.item{cursor:none}}
+
+/* Phones: the note rises from the bottom instead of sitting beside the plant. */
 @media (max-width:700px){
-  #mark{text-align:left;padding-left:max(20px,env(safe-area-inset-left,0px))}
-  #note{top:auto;left:0;right:0;bottom:0;width:auto;transform:none;padding:24px max(20px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 30px);
-    background:linear-gradient(to top,var(--shade) 70%,rgba(217,219,212,0));text-align:center}
-  #note p{margin-left:auto;margin-right:auto}
-  .stake{width:36px}
-  .stake .nm{font-size:1.12rem}
+  #note{top:auto;left:0;right:0;bottom:0;width:auto;transform:none;padding:30px max(22px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 32px);
+    background:linear-gradient(to top,var(--shade) 72%,rgba(216,218,210,0));text-align:center}
+  #note p{margin:0 auto}
+  #note .rule{margin:.8rem auto .7rem;transform-origin:center}
+  #note .nm{font-size:1.65rem}
+  .stake{width:32px}
+  .stake .nm{font-size:1.05rem}
+  #mark{font-size:.8rem}
 }
-@media (prefers-reduced-motion:reduce){#panes{animation:none}}
+@media (prefers-reduced-motion:reduce){#mark,#strip{transition:none}#note *{transition:none!important}}
 .empty{position:fixed;inset:0;display:grid;place-items:center;color:var(--soft);font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
 </style>
 </head>
 <body>
 <div class="light" id="glow"></div>
-<div class="light" id="panes"></div>
-<canvas id="vine"></canvas>
-<div id="strip"></div>
+<div id="strip" style="opacity:0"></div>
 <div class="light" id="wash"></div>
+<div id="grain"></div>
 <div id="fade"></div>
 <div id="mark">Sauterelle</div>
 <div id="marker" aria-live="polite"><div class="stake"><span class="no"></span><span class="nm"></span></div></div>
-<div id="note"><div><span class="nm"></span><span class="lt"></span><p></p></div></div>
+<div id="note"><span class="nm"></span><span class="lt"></span><span class="rule"></span><p></p></div>
+<div id="cursor"></div>
 
 <script>
 (function(){
 const strip=document.getElementById('strip'),marker=document.getElementById('marker'),mNo=marker.querySelector('.no'),mNm=marker.querySelector('.nm');
-const note=document.getElementById('note');
+const note=document.getElementById('note'),cursorEl=document.getElementById('cursor');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isCut=f=>/\.(png|webp)$/i.test(f);
+const fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
 
 // ---- plants.txt --------------------------------------------------------------
 function parse(txt){
@@ -122,27 +138,29 @@ function parse(txt){
 }
 
 // ---- Geometry ---------------------------------------------------------------------
-// Each photo keeps its own shape; widths follow a loose rhythm so the column never looks like a template.
-const GAP=34;
+// Cut-outs are sized by how much of the screen the plant itself covers, so a slim leek and a round
+// pepper cluster arrive with the same visual weight. Framed photos are all one size.
+const GAP=40;
 let P=[],N=0,W=0,H=0,base=0,w=[],h=[],off=[],L=0;
 function measure(){
   W=innerWidth;H=innerHeight;
   base=Math.min(W*.6,H*.42,400);
+  const target=base*base*1.25*.56;                 // the area each plant should cover
   off=[];w=[];h=[];let y=0;
-  P.forEach((p,i)=>{
-    // framed photos are all one size and shape; cut-outs keep their own outline at a matching height
-    const cut=/\.(png|webp)$/i.test(p.photo);
-    let hh=base/.8,ww=base;
-    if(cut){hh=base/.8*1.12;ww=Math.min(hh*(p.ar||.5),base*1.05,W*.8);hh=ww/(p.ar||.5);}
+  P.forEach(p=>{
+    let ww=base,hh=base/.8;
+    if(isCut(p.photo)){
+      const ar=p.ar||.8,fill=Math.max(.2,p.fill||.6);
+      ww=Math.sqrt(target/fill*ar);hh=ww/ar;
+      const k=Math.min(1,(W*.8)/ww,(H*.56)/hh);ww*=k;hh*=k;
+    }
     w.push(ww);h.push(hh);off.push(y);y+=hh+GAP;
   });
   L=y;
 }
 const mod=(a,n)=>((a%n)+n)%n;
-// item k (any integer) lives at lap floor(k/N); its centre on the strip:
 const centreOf=k=>Math.floor(k/N)*L+off[mod(k,N)]+h[mod(k,N)]/2;
 function nearest(s){
-  // which item's centre is closest to strip position s
   const lap=Math.floor(s/L),r=s-lap*L;let best=0,bd=1e9;
   for(let i=0;i<N;i++){const c=off[i]+h[i]/2;for(const dl of [-1,0,1]){const d=Math.abs(c+dl*L-r);if(d<bd){bd=d;best=i+(lap+dl)*N;}}}
   return best;
@@ -152,132 +170,147 @@ function nearest(s){
 const pool=new Map();
 function el(k){
   let e=pool.get(k);if(e)return e;
-  const i=mod(k,N);e=document.createElement('div');e.className='item'+(/\.(png|webp)$/i.test(P[i].photo)?' cut':'');
-  e.innerHTML='<img alt="'+esc(P[i].name||'')+'" src="photos/'+encodeURI(P[i].photo)+'" decoding="async">';
+  const i=mod(k,N);e=document.createElement('div');e.className='item '+(isCut(P[i].photo)?'cut':'framed');
+  e.innerHTML='<span class="sh"></span><img alt="'+esc(P[i].name||'')+'" src="photos/'+encodeURI(P[i].photo)+'" decoding="async">';
   e.addEventListener('click',()=>onTap(k));
+  e.addEventListener('pointerenter',()=>cursorEl.classList.add('over'));
+  e.addEventListener('pointerleave',()=>cursorEl.classList.remove('over'));
+  e._img=e.lastChild;e._sh=e.firstChild;
   strip.appendChild(e);pool.set(k,e);return e;
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 // ---- Motion state ----------------------------------------------------------------
-let s=0,vel=0,target=null,dragging=false,lastInput=-1e9,reading=false;
+let s=0,vel=0,target=null,dragging=false,lastInput=-1e9,reading=false,intro=true;
 function setReading(v){
   reading=v;document.body.classList.toggle('reading',v);
   if(v){const p=P[mod(cur,N)];note.querySelector('.nm').textContent=p.name||'';note.querySelector('.lt').textContent=p.latin||'';note.querySelector('p').textContent=p.note||'';}
 }
 function goTo(k){target=centreOf(k);vel=0;lastInput=performance.now();}
 function onTap(k){
-  if(moved)return;
+  if(moved)return;endIntro();
   if(k===cur){setReading(!reading);return;}
   setReading(false);goTo(k);
 }
 document.addEventListener('click',e=>{if(reading&&!e.target.closest('.item'))setReading(false);});
 
-function nudge(px){target=null;vel=Math.max(-90,Math.min(90,vel+px));lastInput=performance.now();if(reading)setReading(false);}
+function endIntro(){if(intro){intro=false;target=null;}}
+function nudge(px){endIntro();target=null;vel=Math.max(-90,Math.min(90,vel+px));lastInput=performance.now();if(reading)setReading(false);}
 addEventListener('wheel',e=>{e.preventDefault();const px=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?H:1);nudge(px*.11);},{passive:false});
 let ty=0,tt=0,tv=0,sy=0,moved=false;
-addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;dragging=true;moved=false;ty=sy=e.clientY;tt=performance.now();tv=0;vel=0;target=null;});
+addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;endIntro();dragging=true;moved=false;ty=sy=e.clientY;tt=performance.now();tv=0;vel=0;target=null;});
 addEventListener('pointermove',e=>{
+  if(e.pointerType==='mouse'&&fine){mx=e.clientX;my=e.clientY;cursorEl.classList.add('on');}
   if(!dragging)return;const t=performance.now(),dy=ty-e.clientY,dt=Math.max(8,t-tt);
   if(Math.abs(e.clientY-sy)>6){moved=true;if(reading)setReading(false);}
   s+=dy;tv=tv*.4+(dy/dt*16.7)*.6;ty=e.clientY;tt=t;lastInput=t;
 });
+document.addEventListener('pointerleave',()=>cursorEl.classList.remove('on'));
 const end=()=>{if(!dragging)return;dragging=false;vel=Math.max(-120,Math.min(120,tv));lastInput=performance.now();setTimeout(()=>moved=false,0);};
 addEventListener('pointerup',end);addEventListener('pointercancel',end);
 addEventListener('keydown',e=>{
+  endIntro();
   if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();setReading(false);goTo(cur+1);}
   if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();setReading(false);goTo(cur-1);}
   if(e.key==='Enter')setReading(!reading);
   if(e.key==='Escape')setReading(false);
 });
 
-let cur=0,shown=-1;
-
 // ---- Render ------------------------------------------------------------------------
-let lastT=0,cw=0,gw=0,gh=0,sink=0,needH=0;
-// length of the pencilled name, so the marker can grow to fit it
+let cur=0,shown=-1,lastT=0,cw=0,gw=0,gh=0,sink=1,needH=0,still=0,ra=3,rv=0,mx=-99,my=-99,cx=-99,cy=-99;
 const tctx=document.createElement('canvas').getContext('2d');
 function textLen(el){const cs=getComputedStyle(el);tctx.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return Math.ceil(tctx.measureText(el.textContent).width);}
-const vine=document.getElementById('vine'),vx=vine.getContext('2d');let VD=1;
-function sizeVine(){VD=Math.min(devicePixelRatio||1,2);vine.width=innerWidth*VD;vine.height=innerHeight*VD;}
-sizeVine();addEventListener('resize',sizeVine);
 
-// A fine vine runs down behind the plants, swaying gently, with small leaves along it.
-function drawVine(top){
-  const W=innerWidth,H=innerHeight,A=Math.min(W*.05,34),lam=300;
-  vx.setTransform(VD,0,0,VD,0,0);vx.clearRect(0,0,W,H);
-  vx.strokeStyle='rgba(38,48,31,.32)';vx.lineWidth=1.1;vx.beginPath();
-  const xAt=y=>W/2+A*Math.sin((y+top)/lam)+A*.4*Math.sin((y+top)/(lam*.41)+1.3);
-  for(let y=-20;y<=H+20;y+=6){const x=xAt(y);y===-20?vx.moveTo(x,y):vx.lineTo(x,y);}
-  vx.stroke();
-  vx.fillStyle='rgba(38,48,31,.30)';
-  const step=118,first=Math.ceil((top-20)/step);
-  for(let n=first;n*step-top<H+20;n++){
-    const y=n*step-top,x=xAt(y),side=n%2?1:-1;
-    vx.save();vx.translate(x,y);vx.rotate(side*.75-.3);vx.beginPath();
-    vx.ellipse(side*9,0,10,3.6,0,0,Math.PI*2);vx.fill();vx.restore();
-  }
-}
 function frame(t){
   const dt=Math.min(3,(t-(lastT||t))/16.7);lastT=t;
+  // cursor follows with a little lag
+  cx+=(mx-cx)*Math.min(1,.28*dt);cy+=(my-cy)*Math.min(1,.28*dt);
+  cursorEl.style.transform='translate3d('+cx.toFixed(1)+'px,'+cy.toFixed(1)+'px,0)';
   if(N){
     if(!dragging){
-      if(target!==null){s+=(target-s)*(1-Math.pow(1-.075,dt));if(Math.abs(target-s)<.3){s=target;target=null;}}
-      else{
+      if(target!==null){
+        const k=intro?.035:.075;
+        s+=(target-s)*(1-Math.pow(1-k,dt));
+        if(Math.abs(target-s)<(intro?3:.3)){if(!intro)s=target;target=intro?target:null;if(intro){intro=false;}}
+      }else{
         s+=vel*dt;vel*=Math.pow(.93,dt);
         if(Math.abs(vel)<2.5&&t-lastInput>90){const c=centreOf(nearest(s));s+=(c-s)*(1-Math.pow(1-.1,dt));vel*=.6;if(Math.abs(c-s)<.25)s=c;}
       }
     }
     cur=nearest(s);
-    const top=s-H/2,band=Math.min(H*.32,310);   // half-height of the lit band
+    const settled=!dragging&&target===null&&Math.abs(vel)<.5&&Math.abs(centreOf(cur)-s)<1;
+    still+=((settled?1:0)-still)*Math.min(1,(settled?.03:.2)*dt);   // eases in the hover once a plant has settled
+    const top=s-H/2,band=Math.min(H*.32,310);
     const seen=new Set();
     const draw=k=>{
       const i=mod(k,N),y=centreOf(k)-h[i]/2-top;
-      if(y>H+60||y+h[i]<-60)return false;
+      if(y>H+80||y+h[i]<-80)return false;
       seen.add(k);const e=el(k);
-      // how far this photo sits from the light: 0 fully lit, 1 in shade
-      const g=Math.min(1,Math.max(0,(Math.abs(centreOf(k)-s)-h[i]*.18)/band));
-      const g2=g*g*(3-2*g);
+      const g=Math.min(1,Math.max(0,(Math.abs(centreOf(k)-s)-h[i]*.15)/band)),g2=g*g*(3-2*g);
       e.style.width=w[i]+'px';e.style.height=h[i]+'px';
-      e.style.transform='translate3d('+(-w[i]/2)+'px,'+y.toFixed(1)+'px,0)';
-      e.style.filter=(e.classList.contains('cut')?'drop-shadow(0 22px 18px rgba(30,32,24,'+(.22-.1*g2).toFixed(3)+')) ':'')+'saturate('+(1.06-.96*g2).toFixed(3)+') brightness('+(1.03-.2*g2).toFixed(3)+') contrast('+(1-.1*g2).toFixed(3)+') sepia('+(.06*(1-g2)).toFixed(3)+')';
-      e.style.opacity=reading&&k!==cur?'.25':'1';
+      e.style.transform='translate3d('+(-w[i]/2).toFixed(1)+'px,'+y.toFixed(1)+'px,0)';
+      // in the light: colour and focus. In the shade: grey, soft, slightly faded.
+      const blur=reduce?0:g2*3.2;
+      e.style.filter='saturate('+(1.04-.96*g2).toFixed(3)+') brightness('+(1.02-.16*g2).toFixed(3)+') contrast('+(1-.12*g2).toFixed(3)+')'+(blur>.05?' blur('+blur.toFixed(2)+'px)':'');
+      e.style.opacity=reading&&k!==cur?'.2':(1-.25*g2).toFixed(3);
+      // the plant in the light hovers: a slow rise and fall above its shadow
+      const bob=(k===cur&&!reduce)?still*(Math.sin(t/1400)*3.2-2.4):0;
+      e._img.style.transform='translate3d(0,'+bob.toFixed(2)+'px,0)';
+      e._sh.style.opacity=(1-g2*.85).toFixed(3);
+      e._sh.style.transform='scale('+(1+bob*.012).toFixed(4)+','+(1+bob*.02).toFixed(4)+')';
       return true;
     };
     for(let k=cur,n=0;n<30&&draw(k);k--,n++);
     for(let k=cur+1,n=0;n<30&&draw(k);k++,n++);
     for(const [k,e] of pool){if(!seen.has(k)){e.remove();pool.delete(k);}}
 
-    // the marker follows the size of the photo in the light, blending between neighbours while moving
+    // marker
     const i=mod(cur,N);
     const c=centreOf(cur),dk=s-c,nk=dk>0?cur+1:cur-1,ni=mod(nk,N),span=Math.abs(centreOf(nk)-c)||1,f=Math.min(1,Math.abs(dk)/span);
     gw+=((w[i]+(w[ni]-w[i])*f)-gw)*.22;gh+=((h[i]+(h[ni]-h[i])*f)-gh)*.22;
-    // while plants are moving the marker is pulled down out of the light; once one settles it is pushed back in with the new name
-    // it starts rising as soon as a plant is nearly in place, rather than waiting for it to fully settle
-    // Look ahead: where will this glide come to rest? The marker heads for that plant while it is still arriving.
     const rest=target!==null?target:s+vel*13,land=nearest(rest),li=mod(land,N);
     const arriving=Math.abs(centreOf(land)-s)<gh*.55;
-    const moving=dragging&&Math.abs(tv)>2||Math.abs(vel)>14||!arriving;
+    const moving=intro||dragging&&Math.abs(tv)>2||Math.abs(vel)>14||!arriving;
     const want=moving||li!==shown?1:0;
-    sink+=(want-sink)*Math.min(1,(want?.35:.24)*dt);
-    if(li!==shown&&sink>.8){shown=li;mNo.textContent=String(li+1).padStart(2,'0')+'/'+String(N).padStart(2,'0');mNm.textContent=P[li].name||'';needH=textLen(mNm)+72;if(reading)setReading(false);}
-    const narrow=W<=700,mw=narrow?36:44,mh=Math.max(120,needH,Math.min(gh*.62,230));
+    sink+=(want-sink)*Math.min(1,(want?.35:.2)*dt);
+    if(li!==shown&&sink>.8){
+      shown=li;mNo.textContent=String(li+1).padStart(2,'0')+'/'+String(N).padStart(2,'0');mNm.textContent=P[li].name||'';needH=textLen(mNm)+70;
+      rv=reduce?0:-2.2;                                   // a small knock as it is pushed in, so it settles with a sway
+      if(reading)setReading(false);
+    }
+    rv+=(3-ra)*.06*dt;rv*=Math.pow(.86,dt);ra+=rv*dt;
+    const narrow=W<=700,mw=narrow?32:38,mh=Math.max(118,needH,Math.min(gh*.6,220));
     marker.style.setProperty('--mh',mh.toFixed(0)+'px');
-    const mx=Math.min(W/2+gw/2-mw*.55,W-mw-10),my=H/2+gh/2+30-mh+sink*mh*.75;
-    marker.style.transform='translate3d('+mx.toFixed(1)+'px,'+my.toFixed(1)+'px,0) rotate('+(3+sink*4).toFixed(2)+'deg)';
-    marker.style.opacity=(1-sink*.95).toFixed(3);
-    drawVine(top);
+    const mxp=Math.min(W/2+gw/2-mw*.5,W-mw-12),myp=H/2+gh/2+26-mh+sink*mh*.75;
+    marker.style.transform='translate3d('+mxp.toFixed(1)+'px,'+myp.toFixed(1)+'px,0) rotate('+(ra+sink*4).toFixed(2)+'deg)';
+    marker.style.opacity=(1-sink).toFixed(3);
     cw=gw;document.documentElement.style.setProperty('--cw',cw.toFixed(1)+'px');
   }
   requestAnimationFrame(frame);
 }
 
+// How much of each cut-out's frame the plant itself fills (used to size plants by visual weight).
+function measureFill(im){
+  try{
+    const c=document.createElement('canvas'),S=48;c.width=S;c.height=S;const x=c.getContext('2d');
+    x.drawImage(im,0,0,S,S);const d=x.getImageData(0,0,S,S).data;let n=0;
+    for(let j=3;j<d.length;j+=4)if(d[j]>100)n++;return n/(S*S);
+  }catch(_){return .6;}
+}
+
 addEventListener('resize',()=>{if(N){const k=cur;measure();s=centreOf(k);}});
 fetch('plants.txt',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.text();})
   .then(txt=>{P=parse(txt);N=P.length;if(!N)throw 0;
-    return Promise.all(P.map(p=>new Promise(res=>{const im=new Image();im.onload=()=>{p.ar=im.naturalWidth/im.naturalHeight;res();};im.onerror=()=>res();im.src='photos/'+encodeURI(p.photo);})));})
-  .then(()=>{measure();s=centreOf(0);gw=w[0];gh=h[0];cw=gw;sink=1;})
-  .catch(()=>{document.body.insertAdjacentHTML('beforeend','<p class="empty">No plants listed yet. Add them to plants.txt.</p>');});
+    return Promise.all(P.map(p=>new Promise(res=>{const im=new Image();im.onload=()=>{p.ar=im.naturalWidth/im.naturalHeight;if(isCut(p.photo))p.fill=measureFill(im);res();};im.onerror=()=>res();im.src='photos/'+encodeURI(p.photo);})));})
+  .then(()=>{
+    measure();gw=w[0];gh=h[0];cw=gw;
+    // Opening: empty shade, the name fades in, then the first plant drifts up into the light.
+    document.body.classList.add('ready');
+    if(reduce){s=centreOf(0);intro=false;strip.style.opacity=1;return;}
+    s=centreOf(0)-H*.62;
+    setTimeout(()=>{strip.style.opacity=1;target=centreOf(0);},650);
+  })
+  .catch(()=>{document.body.classList.add('ready');document.body.insertAdjacentHTML('beforeend','<p class="empty">No plants listed yet. Add them to plants.txt.</p>');});
 requestAnimationFrame(frame);
 })();
 </script>
