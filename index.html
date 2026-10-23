@@ -141,7 +141,7 @@ function parse(txt){
 // ---- Geometry ---------------------------------------------------------------------
 // Cut-outs are sized by how much of the screen the plant itself covers, so a slim leek and a round
 // pepper cluster arrive with the same visual weight. Framed photos are all one size.
-const GAP=40;
+const GAP=40,SCALE=.75;
 let P=[],N=0,W=0,H=0,base=0,w=[],h=[],off=[],L=0;
 function measure(){
   W=innerWidth;H=innerHeight;
@@ -155,6 +155,7 @@ function measure(){
       ww=Math.sqrt(target/fill*ar);hh=ww/ar;
       const k=Math.min(1,(W*.8)/ww,(H*.56)/hh);ww*=k;hh*=k;
     }
+    ww*=SCALE;hh*=SCALE;                               // overall plant size on the page
     w.push(ww);h.push(hh);off.push(y);y+=hh+GAP;
   });
   L=y;
