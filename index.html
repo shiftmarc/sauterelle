@@ -120,6 +120,7 @@ const strip=document.getElementById('strip'),marker=document.getElementById('mar
 const note=document.getElementById('note'),cursorEl=document.getElementById('cursor');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isCut=f=>/\.(png|webp)$/i.test(f);
+const DBG=location.hash==='#dbg';
 const fine=matchMedia('(hover:hover) and (pointer:fine)').matches;
 
 // ---- plants.txt --------------------------------------------------------------
@@ -195,7 +196,7 @@ function onTap(k){
 document.addEventListener('click',e=>{if(reading&&!e.target.closest('.item'))setReading(false);});
 
 function endIntro(){if(intro){intro=false;target=null;}}
-function nudge(px){endIntro();target=null;vel=Math.max(-90,Math.min(90,vel+px));lastInput=performance.now();if(reading)setReading(false);}
+function nudge(px){endIntro();target=null;vel=Math.max(-90,Math.min(90,vel+px));pick=true;lastInput=performance.now();if(reading)setReading(false);}
 addEventListener('wheel',e=>{e.preventDefault();const px=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?H:1);nudge(px*.11);},{passive:false});
 let ty=0,tt=0,tv=0,sy=0,moved=false;
 addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;endIntro();dragging=true;moved=false;ty=sy=e.clientY;tt=performance.now();tv=0;vel=0;target=null;});
@@ -206,7 +207,7 @@ addEventListener('pointermove',e=>{
   s+=dy;tv=tv*.4+(dy/dt*16.7)*.6;ty=e.clientY;tt=t;lastInput=t;
 });
 document.addEventListener('pointerleave',()=>cursorEl.classList.remove('on'));
-const end=()=>{if(!dragging)return;dragging=false;vel=Math.max(-120,Math.min(120,tv));lastInput=performance.now();setTimeout(()=>moved=false,0);};
+const end=()=>{if(!dragging)return;dragging=false;vel=Math.max(-120,Math.min(120,tv));pick=true;lastInput=performance.now();setTimeout(()=>moved=false,0);};
 addEventListener('pointerup',end);addEventListener('pointercancel',end);
 addEventListener('keydown',e=>{
   endIntro();
@@ -217,7 +218,7 @@ addEventListener('keydown',e=>{
 });
 
 // ---- Render ------------------------------------------------------------------------
-let cur=0,shown=-1,lastT=0,cw=0,gw=0,gh=0,sink=1,needH=0,still=0,ra=3,rv=0,mx=-99,my=-99,cx=-99,cy=-99;
+let glideT=0,pick=false,cur=0,shown=-1,lastT=0,cw=0,gw=0,gh=0,sink=1,needH=0,still=0,ra=3,rv=0,mx=-99,my=-99,cx=-99,cy=-99;
 const tctx=document.createElement('canvas').getContext('2d');
 function textLen(el){const cs=getComputedStyle(el);tctx.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;return Math.ceil(tctx.measureText(el.textContent).width);}
 
@@ -233,11 +234,25 @@ function frame(t){
         s+=(target-s)*(1-Math.pow(1-k,dt));
         if(Math.abs(target-s)<(intro?3:.3)){if(!intro)s=target;target=intro?target:null;if(intro){intro=false;}}
       }else{
-        s+=vel*dt;vel*=Math.pow(.93,dt);
-        if(Math.abs(vel)<2.5&&t-lastInput>90){const c=centreOf(nearest(s));s+=(c-s)*(1-Math.pow(1-.1,dt));vel*=.6;if(Math.abs(c-s)<.25)s=c;}
+        // Glide: look ahead to where this motion would naturally come to rest, pick the plant at or beyond that
+        // point in the direction of travel, and ease into it. It never passes the plant and never turns back.
+        const c0=centreOf(nearest(s));
+        if(Math.abs(vel)>.05||Math.abs(c0-s)>.3){
+          const dir=Math.abs(vel)>.05?Math.sign(vel):Math.sign(c0-s);
+          if(Math.abs(vel)<=.05&&!pick){glideT=c0;}
+          if(pick){                                          // choose the landing plant only when new input arrives
+            let land=nearest(s+vel*12);
+            while((centreOf(land)-s)*dir<1)land+=dir;
+            glideT=centreOf(land);pick=false;
+          }
+          vel+=(.011*(glideT-s)-.21*vel)*dt;                // critically damped pull toward the plant
+          if(Math.sign(vel)!==dir&&Math.abs(vel)>.05)vel=0; // no reversing
+          s+=vel*dt;
+          if((glideT-s)*dir<=0||(Math.abs(glideT-s)<.3&&Math.abs(vel)<.08)){s=glideT;vel=0;}
+        }else{s=c0;vel=0;glideT=c0;}
       }
     }
-    cur=nearest(s);
+    cur=nearest(s);if(DBG)window.__s=s;
     const settled=!dragging&&target===null&&Math.abs(vel)<.5&&Math.abs(centreOf(cur)-s)<1;
     still+=((settled?1:0)-still)*Math.min(1,(settled?.03:.2)*dt);   // eases in the hover once a plant has settled
     const top=s-H/2,band=Math.min(H*.32,310);
@@ -268,7 +283,7 @@ function frame(t){
     const i=mod(cur,N);
     const c=centreOf(cur),dk=s-c,nk=dk>0?cur+1:cur-1,ni=mod(nk,N),span=Math.abs(centreOf(nk)-c)||1,f=Math.min(1,Math.abs(dk)/span);
     gw+=((w[i]+(w[ni]-w[i])*f)-gw)*.22;gh+=((h[i]+(h[ni]-h[i])*f)-gh)*.22;
-    const rest=target!==null?target:s+vel*13,land=nearest(rest),li=mod(land,N);
+    const rest=target!==null?target:(dragging?s+tv*12:glideT),land=nearest(rest),li=mod(land,N);
     const arriving=Math.abs(centreOf(land)-s)<gh*.55;
     const moving=intro||dragging&&Math.abs(tv)>2||Math.abs(vel)>14||!arriving;
     const want=moving||li!==shown?1:0;
